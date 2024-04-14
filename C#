@@ -1,0 +1,70 @@
+using System;
+using System.IO;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
+
+class Result
+{
+    public static string getAverageTemperatureForUser(int userId)
+    {
+        double totalTemperature = 0;
+        int temperatureReadings = 0;
+        int page = 1;
+        int totalPages = int.MaxValue; // Initially set to a large value
+
+        while (page <= totalPages)
+        {
+            string url = $"https://jsonmock.hackerrank.com/api/medical_records?userId={userId}&page={page}";
+
+            using (var client = new HttpClient())
+            {
+                HttpResponseMessage response = client.GetAsync(url).Result;
+                response.EnsureSuccessStatusCode();
+                string responseBody = response.Content.ReadAsStringAsync().Result;
+
+                dynamic jsonResponse = JObject.Parse(responseBody);
+                totalPages = jsonResponse.total_pages;
+                var data = jsonResponse.data as JArray;
+
+                if (data == null || data.Count == 0)
+                {
+                    break; // No more data available, exit loop
+                }
+
+                foreach (var record in data)
+                {
+                    var vitals = record["vitals"]; // Access the vitals object
+                    if (vitals != null && vitals["bodyTemperature"] != null && vitals["bodyTemperature"].Type != JTokenType.Null)
+                    {
+                        totalTemperature += vitals.Value<double>("bodyTemperature"); // Access the bodyTemperature value
+                        temperatureReadings++;
+                    }
+                }
+            }
+
+            page++;
+        }
+
+        double averageTemperature = temperatureReadings > 0 ? totalTemperature / temperatureReadings : 0;
+
+        return averageTemperature == 0 ? "0" : averageTemperature.ToString("F1");
+    }
+}
+
+
+class Solution
+{
+    public static void Main(string[] args)
+    {
+        TextWriter textWriter = new StreamWriter(@System.Environment.GetEnvironmentVariable("OUTPUT_PATH"), true);
+
+        int userId = Convert.ToInt32(Console.ReadLine().Trim());
+
+        string result = Result.getAverageTemperatureForUser(userId);
+
+        textWriter.WriteLine(result);
+        
+        textWriter.Flush();
+        textWriter.Close();
+    }
+}
