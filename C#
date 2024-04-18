@@ -14,7 +14,7 @@ class Result
 
         while (page <= totalPages)
         {
-            string url = $"https://jsonmock.hackerrank.com/api/medical_records?userId={userId}&page={page}";
+            string url = $"//(Enter Web Link)";
 
             using (var client = new HttpClient())
             {
